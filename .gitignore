@@ -1,0 +1,36 @@
+# Binaries
+netwatch
+*.exe
+*.out
+
+# Build artifacts
+/dist/
+/build/
+
+# Reports (generated)
+*.html
+!internal/report/templates/report.html
+*.json
+!examples/sample_report.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Dependency directories
+vendor/
