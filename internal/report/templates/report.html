@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netwatch Security Report - {{.Target}}</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+            --critical: #f85149;
+            --high: #f0883e;
+            --medium: #d29922;
+            --low: #3fb950;
+            --info: #58a6ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin: 2rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+
+        .meta {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .meta span { margin-right: 2rem; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .summary-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .summary-card .label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .summary-card.critical .value { color: var(--critical); }
+        .summary-card.high .value { color: var(--high); }
+        .summary-card.medium .value { color: var(--medium); }
+        .summary-card.low .value { color: var(--low); }
+        .summary-card.info .value { color: var(--info); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: var(--surface);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        tr:last-child td { border-bottom: none; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.critical { background: rgba(248, 81, 73, 0.2); color: var(--critical); }
+        .badge.high { background: rgba(240, 136, 62, 0.2); color: var(--high); }
+        .badge.medium { background: rgba(210, 153, 34, 0.2); color: var(--medium); }
+        .badge.low { background: rgba(63, 185, 80, 0.2); color: var(--low); }
+        .badge.info { background: rgba(88, 166, 255, 0.2); color: var(--info); }
+
+        .badge.open { background: rgba(63, 185, 80, 0.2); color: var(--low); }
+        .badge.closed { background: rgba(248, 81, 73, 0.2); color: var(--critical); }
+        .badge.filtered { background: rgba(210, 153, 34, 0.2); color: var(--medium); }
+
+        .finding {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .finding-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding p { color: var(--text-muted); margin-bottom: 0.5rem; }
+
+        .finding .remediation {
+            color: var(--low);
+            font-size: 0.9rem;
+        }
+
+        .tls-info {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+
+        .tls-info dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.5rem 1rem;
+        }
+
+        .tls-info dt {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .disclaimer {
+            background: rgba(210, 153, 34, 0.1);
+            border: 1px solid var(--medium);
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            color: var(--medium);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Netwatch Security Report</h1>
+            <div class="meta">
+                <span>Target: <strong>{{.Target}}</strong></span>
+                <span>Date: <strong>{{.StartTime.Format "2006-01-02 15:04:05 MST"}}</strong></span>
+                <span>Duration: <strong>{{.Duration}}</strong></span>
+                <span>Report ID: <strong>{{.ID}}</strong></span>
+            </div>
+        </header>
+
+        <div class="disclaimer">
+            This report was generated by Netwatch for authorized security assessment purposes only.
+            Unauthorized scanning of systems you do not own or have permission to test is illegal.
+        </div>
+
+        <h2>Summary</h2>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="value">{{.Summary.OpenPorts}}</div>
+                <div class="label">Open Ports</div>
+            </div>
+            <div class="summary-card critical">
+                <div class="value">{{.Summary.Critical}}</div>
+                <div class="label">Critical</div>
+            </div>
+            <div class="summary-card high">
+                <div class="value">{{.Summary.High}}</div>
+                <div class="label">High</div>
+            </div>
+            <div class="summary-card medium">
+                <div class="value">{{.Summary.Medium}}</div>
+                <div class="label">Medium</div>
+            </div>
+            <div class="summary-card low">
+                <div class="value">{{.Summary.Low}}</div>
+                <div class="label">Low</div>
+            </div>
+            <div class="summary-card info">
+                <div class="value">{{.Summary.Info}}</div>
+                <div class="label">Info</div>
+            </div>
+        </div>
+
+        {{if .Ports}}
+        <h2>Port Scan Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Port</th>
+                    <th>State</th>
+                    <th>Service</th>
+                    <th>Version</th>
+                    <th>Banner</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Ports}}
+                <tr>
+                    <td>{{.Port}}</td>
+                    <td><span class="badge {{portStateClass .State}}">{{.State}}</span></td>
+                    <td>{{.Service}}</td>
+                    <td>{{.Version}}</td>
+                    <td>{{.Banner}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{end}}
+
+        {{if .TLS}}
+        <h2>TLS/SSL Analysis</h2>
+        <div class="tls-info">
+            <dl>
+                <dt>Protocol Version</dt><dd>{{.TLS.Version}}</dd>
+                <dt>Cipher Suite</dt><dd>{{.TLS.CipherSuite}}</dd>
+                <dt>Certificate Subject</dt><dd>{{.TLS.CertSubject}}</dd>
+                <dt>Certificate Issuer</dt><dd>{{.TLS.CertIssuer}}</dd>
+                <dt>Certificate Expiry</dt><dd>{{.TLS.CertExpiry.Format "2006-01-02 15:04:05 MST"}} ({{.TLS.DaysUntilExpiry}} days)</dd>
+                <dt>Self-Signed</dt><dd>{{if .TLS.SelfSigned}}Yes{{else}}No{{end}}</dd>
+                <dt>Chain Length</dt><dd>{{.TLS.CertChainLength}}</dd>
+                {{if .TLS.SupportedVersions}}
+                <dt>Supported Versions</dt><dd>{{join .TLS.SupportedVersions ", "}}</dd>
+                {{end}}
+                {{if .TLS.SANs}}
+                <dt>SANs</dt><dd>{{join .TLS.SANs ", "}}</dd>
+                {{end}}
+            </dl>
+        </div>
+        {{end}}
+
+        {{if .Headers}}
+        <h2>HTTP Security Headers</h2>
+        <p>Score: <strong>{{.Headers.Score}}/100</strong></p>
+        {{if .Headers.Missing}}
+        <h3>Missing Headers</h3>
+        <table>
+            <thead><tr><th>Header</th></tr></thead>
+            <tbody>
+                {{range .Headers.Missing}}
+                <tr><td>{{.}}</td></tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{end}}
+        {{end}}
+
+        {{if .Hosts}}
+        <h2>Discovered Hosts</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>IP Address</th>
+                    <th>Hostname</th>
+                    <th>Latency</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Hosts}}
+                <tr>
+                    <td>{{.IP}}</td>
+                    <td>{{.Hostname}}</td>
+                    <td>{{.Latency}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{end}}
+
+        {{if .CVEs}}
+        <h2>Known Vulnerabilities (CVEs)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>CVE ID</th>
+                    <th>CVSS</th>
+                    <th>Severity</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .CVEs}}
+                <tr>
+                    <td><a href="https://nvd.nist.gov/vuln/detail/{{.ID}}" style="color: var(--accent);">{{.ID}}</a></td>
+                    <td>{{.CVSS}}</td>
+                    <td><span class="badge {{lower .Severity}}">{{.Severity}}</span></td>
+                    <td>{{.Description}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{end}}
+
+        {{if .Findings}}
+        <h2>Security Findings</h2>
+        {{range .Findings}}
+        <div class="finding">
+            <div class="finding-header">
+                <span class="badge {{severityClass .Severity}}">{{.Severity}}</span>
+                <h3>{{.Title}}</h3>
+            </div>
+            <p>{{.Description}}</p>
+            {{if .Remediation}}
+            <p class="remediation">Remediation: {{.Remediation}}</p>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}
+
+        {{if .TLS}}{{if .TLS.Findings}}
+        <h2>TLS Findings</h2>
+        {{range .TLS.Findings}}
+        <div class="finding">
+            <div class="finding-header">
+                <span class="badge {{severityClass .Severity}}">{{.Severity}}</span>
+                <h3>{{.Title}}</h3>
+            </div>
+            <p>{{.Description}}</p>
+            {{if .Remediation}}
+            <p class="remediation">Remediation: {{.Remediation}}</p>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}{{end}}
+
+        {{if .Headers}}{{if .Headers.Findings}}
+        <h2>HTTP Header Findings</h2>
+        {{range .Headers.Findings}}
+        <div class="finding">
+            <div class="finding-header">
+                <span class="badge {{severityClass .Severity}}">{{.Severity}}</span>
+                <h3>{{.Title}}</h3>
+            </div>
+            <p>{{.Description}}</p>
+            {{if .Remediation}}
+            <p class="remediation">Remediation: {{.Remediation}}</p>
+            {{end}}
+        </div>
+        {{end}}
+        {{end}}{{end}}
+
+        <footer>
+            <p>Generated by <strong>Netwatch</strong> &mdash; Network Security Monitor &amp; Vulnerability Scanner</p>
+            <p>This tool is intended for authorized security testing only.</p>
+        </footer>
+    </div>
+</body>
+</html>
